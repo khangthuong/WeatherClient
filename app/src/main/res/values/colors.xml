@@ -5,9 +5,9 @@
     <color name="colorAccent">#FF4081</color>
     <color name="colorWhite">#FFFFFF</color>
 
-    <color name="colorMobi1">#66039BE5</color>
-    <color name="colorMobi2">#81D4FA</color>
-    <color name="colorMobi3">#8C29B6F6</color>
+    <color name="colorMobi1">#B30060af</color>
+    <color name="colorMobi2">#42A5F5</color>
+    <color name="colorMobi3">#1565C0</color>
 
     <color name="transparent">#00000000</color>
 </resources>
