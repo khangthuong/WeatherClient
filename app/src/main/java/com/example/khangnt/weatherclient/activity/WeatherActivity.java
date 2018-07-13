@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,6 +66,7 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
     private Context mContext;
     private TextView txt_location, txt_status, txt_feel_like, txt_temp, txt_humidity;
     private RecyclerView hourly_list_view, daily_list_view;
+    private ProgressBar loadingLayoutProgressBar;
     private LinearLayout linearLayoutimg_temp;
     private LinearLayoutManager linearLayoutManager, linearLayoutManager1;
     private Handler handler;
@@ -103,6 +105,8 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         linearLayoutimg_temp = (LinearLayout)findViewById(R.id.img_temp);
         hourly_list_view = (RecyclerView)findViewById(R.id.hourly_list_view);
         daily_list_view = (RecyclerView)findViewById(R.id.daily_list_view);
+        loadingLayoutProgressBar = (ProgressBar)findViewById(R.id.loading_layout);
+        loadingLayoutProgressBar.setVisibility(View.VISIBLE);
 
         linearLayoutManager = new LinearLayoutManager(this,
                 LinearLayoutManager.HORIZONTAL, false);
@@ -132,7 +136,6 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                 if (message == null) {
                     return false;
                 }
-
                 switch (message.what) {
                     case LOAD_CURRENT_CONDITION:
                         break;
@@ -141,6 +144,7 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                         break;
                     case LOAD_DAYLY_CONDITION:
                         weatherDailyAdapter.notifyDataSetChanged();
+                        loadingLayoutProgressBar.setVisibility(View.GONE);
                         break;
                 }
                 return false;
@@ -150,20 +154,16 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_weather, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_refresh) {
+            onRefreshCondition();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -462,6 +462,10 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         mLastLocation = locationHelper.getLocation();
 
         if (mLastLocation != null) {
+            if(loadingLayoutProgressBar.getVisibility() == View.GONE) {
+                loadingLayoutProgressBar.setVisibility(View.VISIBLE);
+            }
+
             latitude = mLastLocation.getLatitude();
             longitude = mLastLocation.getLongitude();
             getAddress();
@@ -524,6 +528,7 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
             params.height = 260;
             view.setLayoutParams(params);
         }
+        parent.removeAllViews();
         parent.addView(view);
     }
 }

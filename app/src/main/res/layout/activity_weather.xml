@@ -170,7 +170,7 @@
             android:textSize="15sp"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="15dp"
-            android:text="HOURLY"
+            android:text="HOURLY (48 hours later)"
             android:textStyle="bold"
             android:textColor="@color/colorWhite"
             android:fontFamily="sans-serif-condensed"
@@ -190,7 +190,7 @@
             android:textSize="15sp"
             android:layout_marginStart="15dp"
             android:layout_marginBottom="15dp"
-            android:text="DAILY"
+            android:text="DAILY (7 days later)"
             android:textStyle="bold"
             android:textColor="@color/colorWhite"
             android:fontFamily="sans-serif-condensed"
@@ -203,6 +203,14 @@
             android:layout_below="@+id/txt_daily"
             android:layout_alignParentBottom="true">
         </android.support.v7.widget.RecyclerView>
+
+        <ProgressBar
+            android:id="@+id/loading_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:background="@color/transparent"
+            android:visibility="gone"/>
 
     </RelativeLayout>
 
