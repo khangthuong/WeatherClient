@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
+    android:id="@+id/root_layout_hourly"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="60dp"
     android:layout_height="150dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
     android:orientation="vertical">.
 
     <LinearLayout

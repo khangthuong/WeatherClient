@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.khangnt.weatherclient.R;
+import com.example.khangnt.weatherclient.activity.OnItemClickListenerRecycleView;
 import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
 import com.thbs.skycons.library.CloudFogView;
 import com.thbs.skycons.library.CloudMoonView;
@@ -31,10 +32,12 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
     private final String TAG = "123";
     private Context mContext;
     private List<WeatherDataCurrent> datas;
+    private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;
 
     public WeatherHourlyAdapter(Context context, List<WeatherDataCurrent> list) {
         this.mContext = context;
         this.datas = list;
+        onItemClickListenerRecycleView = (OnItemClickListenerRecycleView)mContext;
     }
 
     @Override
@@ -83,6 +86,7 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
         protected TextView txt_humidity;
         protected LinearLayout viewIc;
         protected TextView txt_hour;
+        protected View root;
 
 
         public MyViewHolder(View itemView) {
@@ -91,6 +95,13 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
             this.txt_humidity = (TextView)itemView.findViewById(R.id.txt_hum_hourly);
             this.txt_hour = (TextView) itemView.findViewById(R.id.txt_hour);
             this.viewIc = (LinearLayout)itemView.findViewById(R.id.img_temp_hourly);
+            this.root = (LinearLayout)itemView.findViewById(R.id.root_layout_hourly);
+            root.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    onItemClickListenerRecycleView.onClick(getAdapterPosition(),"hourly");
+                }
+            });
         }
     }
 

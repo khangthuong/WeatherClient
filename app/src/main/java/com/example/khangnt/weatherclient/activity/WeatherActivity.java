@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Address;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -60,7 +61,8 @@ import retrofit2.Response;
 import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY;
 
 public class WeatherActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,ActivityCompat.OnRequestPermissionsResultCallback {
+        GoogleApiClient.OnConnectionFailedListener,ActivityCompat.OnRequestPermissionsResultCallback,
+        OnItemClickListenerRecycleView{
 
     private final String TAG = "xxx";//WeatherActivity.class.getSimpleName();
     private Context mContext;
@@ -530,5 +532,17 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         }
         parent.removeAllViews();
         parent.addView(view);
+    }
+
+    @Override
+    public void onClick(int pos, String from) {
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
+
+        if (from.equals("daily")) {
+            intent.setData(Uri.parse(dataDaily.get(pos).getMobileLink()));
+        } else {
+            intent.setData(Uri.parse(dataHourly.get(pos).getMobileLink()));
+        }
+        startActivity(intent);
     }
 }

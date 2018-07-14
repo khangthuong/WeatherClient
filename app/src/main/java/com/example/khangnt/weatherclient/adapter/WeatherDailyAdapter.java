@@ -11,6 +11,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.khangnt.weatherclient.R;
+import com.example.khangnt.weatherclient.activity.OnItemClickListenerRecycleView;
 import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
 import com.thbs.skycons.library.CloudFogView;
 import com.thbs.skycons.library.CloudMoonView;
@@ -31,10 +32,12 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final String TAG = "123";
     private Context mContext;
     private List<WeatherDataCurrent> datas;
+    private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;
 
     public WeatherDailyAdapter(Context context, List<WeatherDataCurrent> list) {
         this.mContext = context;
         this.datas = list;
+        onItemClickListenerRecycleView = (OnItemClickListenerRecycleView)mContext;
     }
 
     @Override
@@ -90,7 +93,7 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         protected TextView txt_humidity;
         protected LinearLayout viewIc;
         protected TextView txt_day;
-
+        protected View root;
 
         public MyViewHolder(View itemView) {
             super(itemView);
@@ -99,6 +102,13 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             this.txt_humidity = (TextView)itemView.findViewById(R.id.txt_hum_daily);
             this.txt_day = (TextView) itemView.findViewById(R.id.txt_day);
             this.viewIc = (LinearLayout)itemView.findViewById(R.id.img_temp_daily);
+            this.root = (LinearLayout)itemView.findViewById(R.id.root_layout_daily);
+            root.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    onItemClickListenerRecycleView.onClick(getAdapterPosition(),"daily");
+                }
+            });
         }
     }
 
