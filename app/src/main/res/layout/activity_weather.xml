@@ -10,8 +10,8 @@
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay"
         android:background="@android:color/transparent"
+        android:theme="@style/AppTheme.AppBarOverlay"
         app:elevation="0dp">
 
         <android.support.v7.widget.Toolbar
@@ -23,196 +23,202 @@
             app:titleTextColor="@color/colorPrimary" />
     </android.support.design.widget.AppBarLayout>
 
-    <RelativeLayout
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <RelativeLayout
-            android:id="@+id/current_location_layout"
-            android:layout_width="180dp"
-            android:gravity="center"
-            android:padding="15dp"
-            android:layout_height="130dp">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/txt_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:text="Dich Vong hau"
-                android:textSize="17sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:textColor="@color/colorWhite"/>
-
-            <TextView
-                android:id="@+id/txt_humidity"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:text="Dich Vong hau"
-                android:textSize="14sp"
-                android:layout_below="@+id/txt_location"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:textColor="@color/colorWhite"/>
-
-            <TextView
-                android:id="@+id/txt_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:text="Dich Vong hau"
-                android:textSize="14sp"
-                android:layout_below="@+id/txt_humidity"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:textColor="@color/colorWhite"/>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/txt_status"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/txt_feel_like"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentLeft="true"
-                    android:text="Dich Vong hau"
-                    android:textSize="14sp"
-                    android:fontFamily="sans-serif-condensed"
-                    android:textStyle="normal"
-                    android:textColor="@color/colorWhite"/>
-
-                <TextView
-                    android:id="@+id/txt_o1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_alignParentLeft="true"
-                    android:text="o"
-                    android:textSize="8sp"
-                    android:fontFamily="sans-serif-condensed"
-                    android:textStyle="normal"
-                    android:textColor="@color/colorWhite"/>
-
-            </LinearLayout>
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/current_temp_layout"
-            android:layout_width="180dp"
-            android:gravity="center"
-            android:layout_alignParentRight="true"
-            android:padding="15dp"
-            android:layout_height="130dp">
-
-            <TextView
-                android:id="@+id/txt_temp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="38"
-                android:layout_toRightOf="@+id/img_temp"
-                android:textSize="21sp"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="bold"
-                android:layout_centerInParent="true"
-                android:textColor="@color/colorWhite"/>
-
-            <LinearLayout
-                android:id="@+id/img_temp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <RelativeLayout
+                android:id="@+id/current_location_layout"
+                android:layout_width="180dp"
+                android:layout_height="130dp"
                 android:gravity="center"
-                android:layout_marginEnd="-12dp"
-                android:layout_centerInParent="true"
-                android:orientation="vertical" />
+                android:padding="15dp">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="5dp"
-                android:layout_toRightOf="@+id/txt_temp"
-                android:layout_centerInParent="true"
-                android:orientation="horizontal">
                 <TextView
-                    android:id="@+id/txt_o"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="top"
-                    android:fontFamily="sans-serif-condensed"
-                    android:textStyle="bold"
-                    android:textSize="12sp"
-                    android:textColor="@color/colorWhite"
-                    android:text="o"/>
-                <TextView
-                    android:gravity="bottom"
-                    android:id="@+id/txt_C"
-                    android:layout_toRightOf="@+id/txt_o"
+                    android:id="@+id/txt_location"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
                     android:fontFamily="sans-serif-condensed"
-                    android:textStyle="bold"
-                    android:textSize="21sp"
+                    android:text="Dich Vong hau"
                     android:textColor="@color/colorWhite"
-                    android:text="C"/>
-            </LinearLayout>
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txt_humidity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_below="@+id/txt_location"
+                    android:fontFamily="sans-serif-condensed"
+                    android:text="Dich Vong hau"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/txt_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_below="@+id/txt_humidity"
+                    android:fontFamily="sans-serif-condensed"
+                    android:text="Dich Vong hau"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/txt_status"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txt_feel_like"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentLeft="true"
+                        android:fontFamily="sans-serif-condensed"
+                        android:text="Dich Vong hau"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="14sp"
+                        android:textStyle="normal" />
+
+                    <TextView
+                        android:id="@+id/txt_o1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentLeft="true"
+                        android:fontFamily="sans-serif-condensed"
+                        android:text="o"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="8sp"
+                        android:textStyle="normal" />
+
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <RelativeLayout
+                android:id="@+id/current_temp_layout"
+                android:layout_width="180dp"
+                android:layout_height="130dp"
+                android:layout_alignParentRight="true"
+                android:gravity="center"
+                android:padding="15dp">
+
+                <TextView
+                    android:id="@+id/txt_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_toRightOf="@+id/img_temp"
+                    android:fontFamily="sans-serif-condensed"
+                    android:text="38"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="21sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/img_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginEnd="-12dp"
+                    android:gravity="center"
+                    android:orientation="vertical" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    android:layout_marginStart="5dp"
+                    android:layout_toRightOf="@+id/txt_temp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/txt_o"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:fontFamily="sans-serif-condensed"
+                        android:gravity="top"
+                        android:text="o"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/txt_C"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toRightOf="@+id/txt_o"
+                        android:fontFamily="sans-serif-condensed"
+                        android:gravity="bottom"
+                        android:text="C"
+                        android:textColor="@color/colorWhite"
+                        android:textSize="21sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/txt_hourly"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/current_temp_layout"
+                android:layout_marginBottom="15dp"
+                android:layout_marginStart="15dp"
+                android:fontFamily="sans-serif-condensed"
+                android:text="HOURLY (48 hours later)"
+                android:textColor="@color/colorWhite"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/hourly_list_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/txt_hourly"></android.support.v7.widget.RecyclerView>
+
+            <TextView
+                android:id="@+id/txt_daily"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/hourly_list_view"
+                android:layout_marginBottom="15dp"
+                android:layout_marginStart="15dp"
+                android:fontFamily="sans-serif-condensed"
+                android:text="DAILY (7 days later)"
+                android:textColor="@color/colorWhite"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/daily_list_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_below="@+id/txt_daily"></android.support.v7.widget.RecyclerView>
+
+            <ProgressBar
+                android:id="@+id/loading_layout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:background="@color/transparent"
+                android:visibility="gone" />
 
         </RelativeLayout>
-
-        <TextView
-            android:id="@+id/txt_hourly"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:layout_marginStart="15dp"
-            android:layout_marginBottom="15dp"
-            android:text="HOURLY (48 hours later)"
-            android:textStyle="bold"
-            android:textColor="@color/colorWhite"
-            android:fontFamily="sans-serif-condensed"
-            android:layout_below="@+id/current_temp_layout"/>
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/hourly_list_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/txt_hourly">
-        </android.support.v7.widget.RecyclerView>
-
-        <TextView
-            android:id="@+id/txt_daily"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="15sp"
-            android:layout_marginStart="15dp"
-            android:layout_marginBottom="15dp"
-            android:text="DAILY (7 days later)"
-            android:textStyle="bold"
-            android:textColor="@color/colorWhite"
-            android:fontFamily="sans-serif-condensed"
-            android:layout_below="@+id/hourly_list_view"/>
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/daily_list_view"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/txt_daily"
-            android:layout_alignParentBottom="true">
-        </android.support.v7.widget.RecyclerView>
-
-        <ProgressBar
-            android:id="@+id/loading_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:background="@color/transparent"
-            android:visibility="gone"/>
-
-    </RelativeLayout>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 
 </android.support.design.widget.CoordinatorLayout>

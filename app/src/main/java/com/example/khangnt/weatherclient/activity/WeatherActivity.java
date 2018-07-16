@@ -12,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -62,13 +63,14 @@ import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY;
 
 public class WeatherActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,ActivityCompat.OnRequestPermissionsResultCallback,
-        OnItemClickListenerRecycleView{
+        OnItemClickListenerRecycleView, SwipeRefreshLayout.OnRefreshListener {
 
     private final String TAG = "xxx";//WeatherActivity.class.getSimpleName();
     private Context mContext;
     private TextView txt_location, txt_status, txt_feel_like, txt_temp, txt_humidity;
     private RecyclerView hourly_list_view, daily_list_view;
     private ProgressBar loadingLayoutProgressBar;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
     private LinearLayout linearLayoutimg_temp;
     private LinearLayoutManager linearLayoutManager, linearLayoutManager1;
     private Handler handler;
@@ -107,6 +109,8 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         linearLayoutimg_temp = (LinearLayout)findViewById(R.id.img_temp);
         hourly_list_view = (RecyclerView)findViewById(R.id.hourly_list_view);
         daily_list_view = (RecyclerView)findViewById(R.id.daily_list_view);
+        mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh_layout);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
         loadingLayoutProgressBar = (ProgressBar)findViewById(R.id.loading_layout);
         loadingLayoutProgressBar.setVisibility(View.VISIBLE);
 
@@ -147,6 +151,7 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                     case LOAD_DAYLY_CONDITION:
                         weatherDailyAdapter.notifyDataSetChanged();
                         loadingLayoutProgressBar.setVisibility(View.GONE);
+                        mSwipeRefreshLayout.setRefreshing(false);
                         break;
                 }
                 return false;
@@ -155,33 +160,14 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_weather, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_refresh) {
-            onRefreshCondition();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         locationHelper.onActivityResult(requestCode,resultCode,data);
     }
-
 
     @Override
     protected void onResume() {
         super.onResume();
         locationHelper.checkPlayServices();
-        //onRefreshCondition();
     }
 
     @Override
@@ -190,6 +176,11 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         // redirects to utils
         locationHelper.onRequestPermissionsResult(requestCode,permissions,grantResults);
 
+    }
+
+    @Override
+    public void onRefresh() {
+        onRefreshCondition();
     }
 
     public void getAddress() {
@@ -464,10 +455,9 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         mLastLocation = locationHelper.getLocation();
 
         if (mLastLocation != null) {
-            if(loadingLayoutProgressBar.getVisibility() == View.GONE) {
+            /*if(loadingLayoutProgressBar.getVisibility() == View.GONE) {
                 loadingLayoutProgressBar.setVisibility(View.VISIBLE);
-            }
-
+            }*/
             latitude = mLastLocation.getLatitude();
             longitude = mLastLocation.getLongitude();
             getAddress();
