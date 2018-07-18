@@ -31,12 +31,12 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     private final String TAG = "123";
     private Context mContext;
-    private List<WeatherDataCurrent> datas;
+    private List<WeatherDataCurrent> data;
     private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;
 
     public WeatherDailyAdapter(Context context, List<WeatherDataCurrent> list) {
         this.mContext = context;
-        this.datas = list;
+        this.data = list;
         onItemClickListenerRecycleView = (OnItemClickListenerRecycleView)mContext;
     }
 
@@ -51,16 +51,16 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         Log.d(TAG, "position: " + position);
         if (holder instanceof MyViewHolder) {
-            String tempMax = datas.get(position).getTemperatureMax();
+            String tempMax = data.get(position).getTemperatureMax();
             double tempMaxD = (Double.parseDouble(tempMax) - 32)*(0.5556);
 
-            String tempMin = datas.get(position).getTemperatureMin();
+            String tempMin = data.get(position).getTemperatureMin();
             double tempMinD = (Double.parseDouble(tempMin) - 32)*(0.5556);
 
-            String humidity = datas.get(position).getRelativeHumidity();
+            String humidity = data.get(position).getRelativeHumidity();
             double humD = (Double.parseDouble(humidity))*100;
 
-            String time = datas.get(position).getTime();
+            String time = data.get(position).getTime();
             long unixSeconds = Long.parseLong(time);
             // convert seconds to milliseconds
             Date date = new Date(unixSeconds*1000L);
@@ -69,7 +69,7 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             // give a timezone reference for formatting (see comment at the bottom)
             sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
             String formattedDate = sdf.format(date);
-            String ic = datas.get(position).getWeatherIcon();
+            String ic = data.get(position).getWeatherIcon();
             Log.d(TAG, "ic: " + ic);
 
             ((MyViewHolder) holder).txt_temp_max.setText(Math.round(tempMaxD)+"");
@@ -83,7 +83,7 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemCount() {
-        return datas.size();
+        return data.size();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -106,7 +106,7 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             root.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    onItemClickListenerRecycleView.onClick(getAdapterPosition(),"daily");
+                    onItemClickListenerRecycleView.onItemClick(getAdapterPosition(), root.getId());
                 }
             });
         }

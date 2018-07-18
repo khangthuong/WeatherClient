@@ -1,21 +1,24 @@
 package com.example.khangnt.weatherclient.activity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.location.Address;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,14 +31,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.khangnt.weatherclient.R;
+import com.example.khangnt.weatherclient.adapter.CityAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherDailyAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherHourlyAdapter;
 import com.example.khangnt.weatherclient.locationutil.LocationHelper;
+import com.example.khangnt.weatherclient.model.City;
 import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
 import com.example.khangnt.weatherclient.rest.ApiClient;
+import com.example.khangnt.weatherclient.rest.ApiClient1;
 import com.example.khangnt.weatherclient.rest.ApiInterface;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.single.PermissionListener;
 import com.thbs.skycons.library.CloudFogView;
 import com.thbs.skycons.library.CloudMoonView;
 import com.thbs.skycons.library.CloudRainView;
@@ -50,8 +59,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import okhttp3.ResponseBody;
@@ -60,24 +76,28 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY;
+import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY_CITY;
 
-public class WeatherActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,ActivityCompat.OnRequestPermissionsResultCallback,
-        OnItemClickListenerRecycleView, SwipeRefreshLayout.OnRefreshListener {
+public class WeatherActivity extends AppCompatActivity implements
+        OnItemClickListenerRecycleView, SwipeRefreshLayout.OnRefreshListener,
+        LocationHelper.OnUpdateUIListener, SearchView.OnQueryTextListener {
 
     private final String TAG = "xxx";//WeatherActivity.class.getSimpleName();
     private Context mContext;
-    private TextView txt_location, txt_status, txt_feel_like, txt_temp, txt_humidity;
-    private RecyclerView hourly_list_view, daily_list_view;
+    private TextView txt_location, txt_status, txt_feel_like, txt_temp, txt_humidity, txt_updated, txt_powerBy;
+    private RecyclerView hourly_list_view, daily_list_view, city_list_view;
     private ProgressBar loadingLayoutProgressBar;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private LinearLayout linearLayoutimg_temp;
-    private LinearLayoutManager linearLayoutManager, linearLayoutManager1;
+    private LinearLayoutManager linearLayoutManager, linearLayoutManager1, linearLayoutManager2;
     private Handler handler;
     private final int LOAD_CURRENT_CONDITION = 101;
     private final int LOAD_HOURLY_CONDITION = 103;
-    private final int LOAD_DAYLY_CONDITION = 105;
-    private ApiInterface apiService;
+    private final int LOAD_DAILY_CONDITION = 105;
+    private final int LOAD_CITY = 107;
+    private final int LOAD_CONDITION_CITY = 109;
+    private final int NO_INTERNET_CONNECTION = 111;
+    private ApiInterface apiService, apiService1;
     private LocationHelper locationHelper;
     private Location mLastLocation;
     private double latitude;
@@ -89,6 +109,10 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
     private WeatherHourlyAdapter weatherHourlyAdapter;
     private List<WeatherDataCurrent> dataDaily;
     private WeatherDailyAdapter weatherDailyAdapter;
+    private List<City> dataCity;
+    private CityAdapter cityAdapter;
+    private MenuItem itemSearch, itemShare;
+    private boolean isLoadFromCity = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,16 +123,25 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         mContext = this;
         dataHourly = new ArrayList<>();
         dataDaily = new ArrayList<>();
-        locationHelper=new LocationHelper(this);
-        locationHelper.checkpermission();
+        dataCity = new ArrayList<>();
+
+        locationHelper = new LocationHelper(this);
         txt_location = (TextView)findViewById(R.id.txt_location);
         txt_status = (TextView)findViewById(R.id.txt_status);
         txt_feel_like = (TextView)findViewById(R.id.txt_feel_like);
         txt_temp = (TextView)findViewById(R.id.txt_temp);
         txt_humidity = ( TextView)findViewById(R.id.txt_humidity);
+        txt_updated = (TextView)findViewById(R.id.txt_updated);
+        txt_powerBy = (TextView)findViewById(R.id.txt_power_by);
         linearLayoutimg_temp = (LinearLayout)findViewById(R.id.img_temp);
         hourly_list_view = (RecyclerView)findViewById(R.id.hourly_list_view);
+        hourly_list_view.setHasFixedSize(true);
         daily_list_view = (RecyclerView)findViewById(R.id.daily_list_view);
+        daily_list_view.setHasFixedSize(true);
+        city_list_view = (RecyclerView)findViewById(R.id.city_list_view);
+        city_list_view.setHasFixedSize(true);
+        city_list_view.addItemDecoration(new DividerItemDecoration(this,
+                DividerItemDecoration.VERTICAL));
         mSwipeRefreshLayout = (SwipeRefreshLayout)findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         loadingLayoutProgressBar = (ProgressBar)findViewById(R.id.loading_layout);
@@ -118,9 +151,12 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                 LinearLayoutManager.HORIZONTAL, false);
         linearLayoutManager1 = new LinearLayoutManager(this,
                 LinearLayoutManager.HORIZONTAL, false);
+        linearLayoutManager2 = new LinearLayoutManager(this,
+                LinearLayoutManager.VERTICAL, false);
 
         hourly_list_view.setLayoutManager(linearLayoutManager);
         daily_list_view.setLayoutManager(linearLayoutManager1);
+        city_list_view.setLayoutManager(linearLayoutManager2);
 
         weatherHourlyAdapter = new WeatherHourlyAdapter(mContext, dataHourly);
         hourly_list_view.setAdapter(weatherHourlyAdapter);
@@ -128,13 +164,24 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         weatherDailyAdapter = new WeatherDailyAdapter(mContext, dataDaily);
         daily_list_view.setAdapter(weatherDailyAdapter);
 
+        cityAdapter = new CityAdapter(mContext, dataCity);
+        city_list_view.setAdapter(cityAdapter);
+
         if (locationHelper.checkPlayServices()) {
-            // Building the GoogleApi client
-            locationHelper.buildGoogleApiClient();
+            locationHelper.init();
         }
 
-        apiService =
-                ApiClient.getClient().create(ApiInterface.class);
+        apiService = ApiClient.getClient().create(ApiInterface.class);
+        apiService1 = ApiClient1.getClient().create(ApiInterface.class);
+
+        txt_powerBy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse("https://darksky.net/forecast/" + latitude + "," + longitude + "/"));
+                startActivity(intent);
+            }
+        });
 
         handler = new Handler(new Handler.Callback() {
             @Override
@@ -148,10 +195,21 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                     case LOAD_HOURLY_CONDITION:
                         weatherHourlyAdapter.notifyDataSetChanged();
                         break;
-                    case LOAD_DAYLY_CONDITION:
+                    case LOAD_DAILY_CONDITION:
                         weatherDailyAdapter.notifyDataSetChanged();
                         loadingLayoutProgressBar.setVisibility(View.GONE);
                         mSwipeRefreshLayout.setRefreshing(false);
+                        break;
+                    case LOAD_CITY:
+                        cityAdapter.notifyDataSetChanged();
+                        break;
+                    case LOAD_CONDITION_CITY:
+                        itemSearch.collapseActionView();
+                        onRefreshCondition();
+                        break;
+                    case NO_INTERNET_CONNECTION:
+                        Toast.makeText(mContext, "No internet connection", Toast.LENGTH_LONG).show();
+                        finish();
                         break;
                 }
                 return false;
@@ -161,21 +219,96 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        locationHelper.onActivityResult(requestCode,resultCode,data);
+        locationHelper.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        locationHelper.stopLocationUpdates();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        locationHelper.checkPlayServices();
+        if (locationHelper.checkPlayServices()) {
+            locationHelper.startLoadLocation();
+        }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        // redirects to utils
-        locationHelper.onRequestPermissionsResult(requestCode,permissions,grantResults);
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        itemSearch = menu.findItem(R.id.action_search);
+        itemShare = menu.findItem(R.id.action_share_condition);
+        final SearchView searchView = (SearchView) itemSearch.getActionView();
+        searchView.setOnQueryTextListener(this);
 
+        itemSearch.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem menuItem) {
+                city_list_view.setVisibility(View.VISIBLE);
+                mSwipeRefreshLayout.setVisibility(View.GONE);
+                itemShare.setVisible(false);
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+                dataCity.clear();
+                city_list_view.setVisibility(View.GONE);
+                mSwipeRefreshLayout.setVisibility(View.VISIBLE);
+                itemShare.setVisible(true);
+                return true;
+            }
+        });
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_my_location) {
+            if (city_list_view.getVisibility() == View.VISIBLE) {
+                itemSearch.collapseActionView();
+            }
+            isLoadFromCity = false;
+            onRefreshCondition();
+        } else if (id == R.id.action_share_condition) {
+            Dexter.withActivity(this)
+                    .withPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    .withListener(new PermissionListener() {
+                        @Override
+                        public void onPermissionGranted(PermissionGrantedResponse response) {
+                            Bitmap bm = screenShot(getWindow().getDecorView().getRootView());
+                            File file = saveBitmap(bm, "mantis_image.png");
+                            Log.d("Khang", "filepath: "+file.getAbsolutePath());
+                            Uri uri = Uri.fromFile(new File(file.getAbsolutePath()));
+                            Intent shareIntent = new Intent();
+                            shareIntent.setAction(Intent.ACTION_SEND);
+                            shareIntent.putExtra(Intent.EXTRA_TEXT, "Check out my app.");
+                            shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                            shareIntent.setType("image/*");
+                            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(Intent.createChooser(shareIntent, "share via"));
+                        }
+
+                        @Override
+                        public void onPermissionDenied(PermissionDeniedResponse response) {
+                            if (response.isPermanentlyDenied()) {
+                                // open device settings when the permission is
+                                // denied permanently
+                                locationHelper.openSettings();
+                            }
+                        }
+
+                        @Override
+                        public void onPermissionRationaleShouldBeShown(com.karumi.dexter.listener.PermissionRequest permission, PermissionToken token) {
+                            token.continuePermissionRequest();
+                        }
+                    }).check();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -186,14 +319,14 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
     public void getAddress() {
         Address locationAddress;
 
-        locationAddress=locationHelper.getAddress(latitude, longitude);
+        locationAddress = locationHelper.getAddress(latitude, longitude);
 
         if(locationAddress!=null) {
 
             address = locationAddress.getAddressLine(0);
             String address1 = locationAddress.getAddressLine(1);
-            city = locationAddress.getLocality();
-            state = locationAddress.getAdminArea();
+            city = locationAddress.getLocality();//Dich vong hau
+            state = locationAddress.getAdminArea();//Ha Noi
             String country = locationAddress.getCountryName();
             String postalCode = locationAddress.getPostalCode();
             String currentLocation;
@@ -201,23 +334,6 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
         else {
             Toast.makeText(mContext, "Something went wrong!", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        mLastLocation=locationHelper.getLocation();
-        onRefreshCondition();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-        locationHelper.connectApiClient();
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i("Connection failed:", " ConnectionResult.getErrorCode() = "
-                + connectionResult.getErrorCode());
     }
 
     @Override
@@ -279,23 +395,22 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                //JsonObject jsonObject = new JsonObject()
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.d("xxx", t.toString());
+                Log.d(TAG, t.toString());
                 Toast.makeText(getApplicationContext(), t.toString(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void loadHoulyCondition() {
+    private void loadHourlyCondition() {
         if (state == null || TextUtils.isEmpty(state)) {
             Toast.makeText(mContext,"No city not found", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        dataHourly.clear();
         Call<ResponseBody> call = apiService.getHourlyCondition(API_KEY, latitude, longitude);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -368,7 +483,7 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
             Toast.makeText(mContext,"No city not found", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        dataDaily.clear();
         Call<ResponseBody> call = apiService.getDailyCondition(API_KEY, latitude, longitude);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -416,9 +531,8 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
 
                         dataDaily.add(weatherDataCurent);
                     }
-                    //weatherHourlyAdapter.notifyDataSetChanged();
                     Message message = new Message();
-                    message.what = LOAD_DAYLY_CONDITION;
+                    message.what = LOAD_DAILY_CONDITION;
                     handler.sendMessage(message);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -438,31 +552,38 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
 
     private void setCurrentConditionToView(String status,
                                            String feellike, String temp, String hummidity, String ic) {
-        txt_location.setText(city);
+        txt_location.setText(city + ", " + state);
         txt_status.setText(status);
         double feellikeD = ((Double.parseDouble(feellike) - 32)*(0.5556));
-        txt_feel_like.setText("Feels like " + Math.round(feellikeD));
+        txt_feel_like.setText("Feels like " + Math.round(feellikeD) + "°C");
 
         double tempD = (Double.parseDouble(temp) - 32)*(0.5556);
-        txt_temp.setText(Math.round(tempD)+"");
+        txt_temp.setText(Math.round(tempD) + "°C");
 
         double humD = (Double.parseDouble(hummidity))*100;
         txt_humidity.setText("Humidity "+(int)humD+"%");
         addWeatherIc(linearLayoutimg_temp, ic);
+
+        Date date = new Date(Calendar.getInstance().getTimeInMillis());
+        SimpleDateFormat sdf = new SimpleDateFormat("E HH:mm:ss");
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
+        String mLastUpdateTime = sdf.format(date);
+
+        txt_updated.setText("updated " + mLastUpdateTime);
+        txt_powerBy.setText("The Dark Sky Weather");
     }
 
     private void onRefreshCondition() {
         mLastLocation = locationHelper.getLocation();
 
         if (mLastLocation != null) {
-            /*if(loadingLayoutProgressBar.getVisibility() == View.GONE) {
-                loadingLayoutProgressBar.setVisibility(View.VISIBLE);
-            }*/
-            latitude = mLastLocation.getLatitude();
-            longitude = mLastLocation.getLongitude();
+            if (!isLoadFromCity) {
+                latitude = mLastLocation.getLatitude();
+                longitude = mLastLocation.getLongitude();
+            }
             getAddress();
             loadCurrentCondition();
-            loadHoulyCondition();
+            loadHourlyCondition();
             loadDailyCondition();
         }
     }
@@ -525,14 +646,160 @@ public class WeatherActivity extends AppCompatActivity implements GoogleApiClien
     }
 
     @Override
-    public void onClick(int pos, String from) {
-        final Intent intent = new Intent(Intent.ACTION_VIEW);
+    public void onItemClick(int pos, int id) {
 
-        if (from.equals("daily")) {
-            intent.setData(Uri.parse(dataDaily.get(pos).getMobileLink()));
+        if (id == R.id.root_layout_city) {
+            Call<ResponseBody> call = apiService1.getDetailCity(API_KEY_CITY, dataCity.get(pos).getPlaceID());
+            call.enqueue(new Callback<ResponseBody>() {
+                @Override
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    JSONObject jsonObject = null;
+                    JSONArray jsonArray = null;
+
+                    try {
+                        jsonObject = new JSONObject(response.body().string().toString());
+                        String lat = jsonObject.getJSONObject("result").getJSONObject("geometry").
+                                getJSONObject("location").getString("lat");
+                        String lng = jsonObject.getJSONObject("result").getJSONObject("geometry").
+                                getJSONObject("location").getString("lng");
+                        latitude = Double.parseDouble(lat);
+                        longitude = Double.parseDouble(lng);
+
+                        Log.d(TAG, "lat" + lat);
+                        Log.d(TAG, "lng" + lng);
+                        isLoadFromCity = true;
+                        Message message = new Message();
+                        message.what = LOAD_CONDITION_CITY;
+                        handler.sendMessage(message);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    Log.d("xxx", t.toString());
+                    Toast.makeText(getApplicationContext(), t.toString(), Toast.LENGTH_SHORT).show();
+                }
+            });
         } else {
-            intent.setData(Uri.parse(dataHourly.get(pos).getMobileLink()));
+            final Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse("https://darksky.net/forecast/" + latitude + "," + longitude + "/"));
+            startActivity(intent);
         }
-        startActivity(intent);
+    }
+
+    @Override
+    public void updateUI() {
+        onRefreshCondition();
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        if(newText == null || TextUtils.isEmpty(newText)) {
+            return false;
+        }
+
+        dataCity.clear();
+        cityAdapter.notifyDataSetChanged();
+        Log.d("Khang", "dataDaily: " + dataCity.size());
+
+        Call<ResponseBody> call = apiService1.getListCity(API_KEY_CITY, newText);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                JSONObject jsonObject = null;
+                JSONArray jsonArray = null;
+                try {
+                    jsonObject = new JSONObject(response.body().string().toString());
+                    jsonArray = jsonObject.getJSONArray("predictions");
+                    Log.d(TAG, jsonArray.toString());
+                    for (int i = 0; i < jsonArray.length(); ++i) {
+                        City city = new City();
+                        String detail = jsonArray.getJSONObject(i).getString("description");
+                        String name = jsonArray.getJSONObject(i).
+                                getJSONObject("structured_formatting").getString("main_text");
+                        String placeid = jsonArray.getJSONObject(i).getString("place_id");
+                        city.setName(name);
+                        city.setDetail(detail);
+                        city.setPlaceID(placeid);
+                        Log.d(TAG, detail.toString());
+                        dataCity.add(city);
+                    }
+                    Log.d("Khang", "dataCity after: " + dataCity.size());
+                    Message message = new Message();
+                    message.what = LOAD_CITY;
+                    handler.sendMessage(message);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.d("xxx", t.toString());
+                Toast.makeText(getApplicationContext(), t.toString(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        return true;
+    }
+
+    public void isInternetAvailable() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final InetAddress address = InetAddress.getByName("www.google.com");
+                    if (address.equals("")) {
+                        Message message = new Message();
+                        message.what = NO_INTERNET_CONNECTION;
+                        handler.sendMessage(message);
+                    }
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                    Message message = new Message();
+                    message.what = NO_INTERNET_CONNECTION;
+                    handler.sendMessage(message);
+                }
+                Message message = new Message();
+                message.what = NO_INTERNET_CONNECTION;
+                handler.sendMessage(message);
+            }
+        }).start();
+    }
+
+    private Bitmap screenShot(View view) {
+        Bitmap bitmap = Bitmap.createBitmap(view.getWidth(),view.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
+        return bitmap;
+    }
+
+    private static File saveBitmap(Bitmap bm, String fileName){
+        final String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Screenshots";
+        File dir = new File(path);
+        if(!dir.exists())
+            dir.mkdirs();
+        File file = new File(dir, fileName);
+        try {
+            FileOutputStream fOut = new FileOutputStream(file);
+            bm.compress(Bitmap.CompressFormat.PNG, 90, fOut);
+            fOut.flush();
+            fOut.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return file;
     }
 }

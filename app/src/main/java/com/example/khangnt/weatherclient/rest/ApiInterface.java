@@ -5,11 +5,10 @@ import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 
 public interface ApiInterface {
-    //@GET("locations/v1/cities/search")
-    //Call<ResponseBody> getLocationKey(@Query("apikey") String apiKey, @Query("q") String city);
 
     @GET("{key}/{latitude},{longitude}?exclude=minutely,hourly,daily,flags")
     Call<ResponseBody> getCurentCondition(@Path("key") String key,
@@ -25,5 +24,13 @@ public interface ApiInterface {
     Call<ResponseBody> getDailyCondition(@Path("key") String key,
                                           @Path("latitude") double latitude,
                                           @Path("longitude") double longitude);
+
+    @GET("place/autocomplete/json")
+    Call<ResponseBody> getListCity(@Query("key") String key,
+                                         @Query("input") String input);
+
+    @GET("place/details/json")
+    Call<ResponseBody> getDetailCity(@Query("key") String key,
+                                   @Query("placeid") String placeid);
 
 }

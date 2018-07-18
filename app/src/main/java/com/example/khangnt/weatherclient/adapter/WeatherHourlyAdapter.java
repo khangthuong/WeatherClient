@@ -31,12 +31,12 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     private final String TAG = "123";
     private Context mContext;
-    private List<WeatherDataCurrent> datas;
+    private List<WeatherDataCurrent> data;
     private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;
 
     public WeatherHourlyAdapter(Context context, List<WeatherDataCurrent> list) {
         this.mContext = context;
-        this.datas = list;
+        this.data = list;
         onItemClickListenerRecycleView = (OnItemClickListenerRecycleView)mContext;
     }
 
@@ -51,11 +51,13 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         Log.d(TAG, "position: " + position);
         if (holder instanceof MyViewHolder) {
-            String temp = datas.get(position).getTemperature();
+            String temp = data.get(position).getTemperature();
             double tempD = (Double.parseDouble(temp) - 32)*(0.5556);
-            String humidity = datas.get(position).getRelativeHumidity();
+
+            String humidity = data.get(position).getRelativeHumidity();
             double humD = (Double.parseDouble(humidity))*100;
-            String time = datas.get(position).getTime();
+
+            String time = data.get(position).getTime();
             long unixSeconds = Long.parseLong(time);
             // convert seconds to milliseconds
             Date date = new java.util.Date(unixSeconds*1000L);
@@ -64,7 +66,7 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
             // give a timezone reference for formatting (see comment at the bottom)
             sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
             String formattedDate = sdf.format(date);
-            String ic = datas.get(position).getWeatherIcon();
+            String ic = data.get(position).getWeatherIcon();
             Log.d(TAG, "ic: " + ic);
 
             ((MyViewHolder) holder).txt_temp.setText(Math.round(tempD)+"");
@@ -77,7 +79,7 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
-        return datas.size();
+        return data.size();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -99,7 +101,7 @@ public class WeatherHourlyAdapter extends RecyclerView.Adapter<RecyclerView.View
             root.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    onItemClickListenerRecycleView.onClick(getAdapterPosition(),"hourly");
+                    onItemClickListenerRecycleView.onItemClick(getAdapterPosition(), root.getId());
                 }
             });
         }

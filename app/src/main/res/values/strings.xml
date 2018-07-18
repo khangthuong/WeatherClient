@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">WEATHER</string>
     <string name="action_refresh">Refresh</string>
+    <string name="title_activity_city_list">CityListActivity</string>
+    <string name="action_search">Search</string>
+    <string name="action_my_location">My Location</string>
+    <string name="action_share_condition">Share</string>
 </resources>
