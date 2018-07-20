@@ -1,8 +1,11 @@
 package com.example.khangnt.weatherclient.activity;
 
 import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.location.Address;
@@ -13,6 +16,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -34,7 +38,10 @@ import com.example.khangnt.weatherclient.R;
 import com.example.khangnt.weatherclient.adapter.CityAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherDailyAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherHourlyAdapter;
-import com.example.khangnt.weatherclient.locationutil.LocationHelper;
+import com.example.khangnt.weatherclient.helper.AlarmHelper;
+import com.example.khangnt.weatherclient.helper.AlarmReceiver;
+import com.example.khangnt.weatherclient.helper.LocationHelper;
+import com.example.khangnt.weatherclient.helper.NotificationUtils;
 import com.example.khangnt.weatherclient.model.City;
 import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
 import com.example.khangnt.weatherclient.rest.ApiClient;
@@ -113,6 +120,14 @@ public class WeatherActivity extends AppCompatActivity implements
     private CityAdapter cityAdapter;
     private MenuItem itemSearch, itemShare;
     private boolean isLoadFromCity = false;
+    private boolean isNeed2ShowNotification = false;
+    private SharedPreferences pref;
+    private SharedPreferences.Editor editor;
+    // Shared pref mode
+    int PRIVATE_MODE = 0;
+    // Shared preferences file name
+    private static final String PREF_NAME = "Weather";
+    private static final String KEY_IS_NEED_2_SHOW_NOTIFICATION = "isNeed2ShowNotification";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,7 +139,6 @@ public class WeatherActivity extends AppCompatActivity implements
         dataHourly = new ArrayList<>();
         dataDaily = new ArrayList<>();
         dataCity = new ArrayList<>();
-
         locationHelper = new LocationHelper(this);
         txt_location = (TextView)findViewById(R.id.txt_location);
         txt_status = (TextView)findViewById(R.id.txt_status);
@@ -215,6 +229,9 @@ public class WeatherActivity extends AppCompatActivity implements
                 return false;
             }
         });
+        pref = getSharedPreferences(PREF_NAME, PRIVATE_MODE);
+        editor = pref.edit();
+        isNeed2ShowNotification = pref.getBoolean(KEY_IS_NEED_2_SHOW_NOTIFICATION, false);
     }
 
     @Override
@@ -239,6 +256,14 @@ public class WeatherActivity extends AppCompatActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        MenuItem itemAlarm = menu.findItem(R.id.action_alarm);
+
+        if (!isNeed2ShowNotification) {
+            itemAlarm.setIcon(R.drawable.ic_alarm_off);
+        } else {
+            itemAlarm.setIcon(R.drawable.ic_alarm_on);
+        }
+
         itemSearch = menu.findItem(R.id.action_search);
         itemShare = menu.findItem(R.id.action_share_condition);
         final SearchView searchView = (SearchView) itemSearch.getActionView();
@@ -307,6 +332,22 @@ public class WeatherActivity extends AppCompatActivity implements
                             token.continuePermissionRequest();
                         }
                     }).check();
+        } else if (id == R.id.action_alarm) {
+            if (!isNeed2ShowNotification) {
+                isNeed2ShowNotification = true;
+                editor.putBoolean(KEY_IS_NEED_2_SHOW_NOTIFICATION, true);
+                // commit changes
+                editor.commit();
+                item.setIcon(R.drawable.ic_alarm_on);
+                AlarmHelper.getInstance(this).setAlarm();
+            } else {
+                isNeed2ShowNotification = false;
+                editor.putBoolean(KEY_IS_NEED_2_SHOW_NOTIFICATION, false);
+                // commit changes
+                editor.commit();
+                item.setIcon(R.drawable.ic_alarm_off);
+                AlarmHelper.getInstance(this).cancelAlarm();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -551,7 +592,7 @@ public class WeatherActivity extends AppCompatActivity implements
     }
 
     private void setCurrentConditionToView(String status,
-                                           String feellike, String temp, String hummidity, String ic) {
+                                           String feellike, String temp, String humidity, String ic) {
         txt_location.setText(city + ", " + state);
         txt_status.setText(status);
         double feellikeD = ((Double.parseDouble(feellike) - 32)*(0.5556));
@@ -560,7 +601,7 @@ public class WeatherActivity extends AppCompatActivity implements
         double tempD = (Double.parseDouble(temp) - 32)*(0.5556);
         txt_temp.setText(Math.round(tempD) + "°C");
 
-        double humD = (Double.parseDouble(hummidity))*100;
+        double humD = (Double.parseDouble(humidity))*100;
         txt_humidity.setText("Humidity "+(int)humD+"%");
         addWeatherIc(linearLayoutimg_temp, ic);
 
@@ -802,4 +843,5 @@ public class WeatherActivity extends AppCompatActivity implements
         }
         return file;
     }
+
 }

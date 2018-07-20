@@ -18,4 +18,9 @@
         android:title="@string/action_share_condition"
         app:showAsAction="always|collapseActionView" />
 
+    <item android:id="@+id/action_alarm"
+        android:icon="@drawable/ic_alarm_off"
+        android:title="@string/action_alarm"
+        app:showAsAction="always|collapseActionView" />
+
 </menu>

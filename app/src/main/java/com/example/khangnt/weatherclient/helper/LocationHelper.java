@@ -1,4 +1,4 @@
-package com.example.khangnt.weatherclient.locationutil;
+package com.example.khangnt.weatherclient.helper;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -68,10 +69,19 @@ public class LocationHelper {
     private Location mCurrentLocation;
     private OnUpdateUIListener onUpdateUIListener;
 
+    private SharedPreferences pref;
+    private SharedPreferences.Editor editor;
+    int PRIVATE_MODE = 0;
+    private static final String PREF_NAME = "LocationHelper";
+    private static final String KEY_LAT = "LAT";
+    private static final String KEY_LNG = "LNG";
+
     public LocationHelper(Context context) {
         onUpdateUIListener = (OnUpdateUIListener)context;
         this.context = context;
         this.current_activity = (Activity) context;
+        pref = context.getSharedPreferences(PREF_NAME, PRIVATE_MODE);
+        editor = pref.edit();
     }
 
     public boolean checkPlayServices() {
@@ -102,6 +112,9 @@ public class LocationHelper {
                 super.onLocationResult(locationResult);
                 // location is received
                 mCurrentLocation = locationResult.getLastLocation();
+                editor.putString(KEY_LAT, mCurrentLocation.getLatitude()+"");
+                editor.putString(KEY_LNG, mCurrentLocation.getLongitude()+"");
+                editor.commit();
                 onUpdateUIListener.updateUI();
             }
         };
