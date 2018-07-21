@@ -12,7 +12,7 @@ import android.widget.TextView;
 
 import com.example.khangnt.weatherclient.R;
 import com.example.khangnt.weatherclient.activity.OnItemClickListenerRecycleView;
-import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
+import com.example.khangnt.weatherclient.model.WeatherData;
 import com.thbs.skycons.library.CloudFogView;
 import com.thbs.skycons.library.CloudMoonView;
 import com.thbs.skycons.library.CloudRainView;
@@ -29,12 +29,12 @@ import java.util.List;
 
 public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private final String TAG = "123";
+    private final String TAG = "WeatherDailyAdapter";
     private Context mContext;
-    private List<WeatherDataCurrent> data;
+    private List<WeatherData> data;
     private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;
 
-    public WeatherDailyAdapter(Context context, List<WeatherDataCurrent> list) {
+    public WeatherDailyAdapter(Context context, List<WeatherData> list) {
         this.mContext = context;
         this.data = list;
         onItemClickListenerRecycleView = (OnItemClickListenerRecycleView)mContext;
@@ -67,7 +67,7 @@ public class WeatherDailyAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             // the format of your date
             SimpleDateFormat sdf = new SimpleDateFormat("E");
             // give a timezone reference for formatting (see comment at the bottom)
-            sdf.setTimeZone(java.util.TimeZone.getTimeZone("GMT+7"));
+            sdf.setTimeZone(java.util.TimeZone.getTimeZone(data.get(position).getTimeZone()));
             String formattedDate = sdf.format(date);
             String ic = data.get(position).getWeatherIcon();
             Log.d(TAG, "ic: " + ic);

@@ -1,6 +1,8 @@
 package com.example.khangnt.weatherclient.model;
 
-public class WeatherDataCurrent {
+public class WeatherData {
+
+    private String timeZone;
     private String weatherText;
     private String weatherIcon;
     private String temperature;
@@ -13,7 +15,7 @@ public class WeatherDataCurrent {
     private String temperatureMax;
     private String temperatureMin;
 
-    /*public WeatherDataCurrent(String weatherText, String weatherIcon, String temperature,
+    /*public WeatherData(String weatherText, String weatherIcon, String temperature,
                              String realFeelTemperature, String localObservationDateTime,
                              String relativeHumidity, String windSpeed, String mobileLink) {
 
@@ -79,8 +81,17 @@ public class WeatherDataCurrent {
         this.localObservationDateTime = localObservationDateTime;
     }
 
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
     public void setRelativeHumidity(String relativeHumidity) {
         this.relativeHumidity = relativeHumidity;
+
     }
 
     public void setWindSpeed(String windSpeed) {

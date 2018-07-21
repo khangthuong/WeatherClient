@@ -1,8 +1,6 @@
 package com.example.khangnt.weatherclient.activity;
 
 import android.Manifest;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,7 +14,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -39,11 +36,9 @@ import com.example.khangnt.weatherclient.adapter.CityAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherDailyAdapter;
 import com.example.khangnt.weatherclient.adapter.WeatherHourlyAdapter;
 import com.example.khangnt.weatherclient.helper.AlarmHelper;
-import com.example.khangnt.weatherclient.helper.AlarmReceiver;
 import com.example.khangnt.weatherclient.helper.LocationHelper;
-import com.example.khangnt.weatherclient.helper.NotificationUtils;
 import com.example.khangnt.weatherclient.model.City;
-import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
+import com.example.khangnt.weatherclient.model.WeatherData;
 import com.example.khangnt.weatherclient.rest.ApiClient;
 import com.example.khangnt.weatherclient.rest.ApiClient1;
 import com.example.khangnt.weatherclient.rest.ApiInterface;
@@ -69,8 +64,6 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -83,7 +76,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY;
-import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY_CITY;
+import static com.example.khangnt.weatherclient.rest.ApiClient1.API_KEY_CITY;
 
 public class WeatherActivity extends AppCompatActivity implements
         OnItemClickListenerRecycleView, SwipeRefreshLayout.OnRefreshListener,
@@ -103,7 +96,6 @@ public class WeatherActivity extends AppCompatActivity implements
     private final int LOAD_DAILY_CONDITION = 105;
     private final int LOAD_CITY = 107;
     private final int LOAD_CONDITION_CITY = 109;
-    private final int NO_INTERNET_CONNECTION = 111;
     private ApiInterface apiService, apiService1;
     private LocationHelper locationHelper;
     private Location mLastLocation;
@@ -112,13 +104,13 @@ public class WeatherActivity extends AppCompatActivity implements
     private String address;
     private String city;
     private String state;
-    private List<WeatherDataCurrent> dataHourly;
+    private List<WeatherData> dataHourly;
     private WeatherHourlyAdapter weatherHourlyAdapter;
-    private List<WeatherDataCurrent> dataDaily;
+    private List<WeatherData> dataDaily;
     private WeatherDailyAdapter weatherDailyAdapter;
     private List<City> dataCity;
     private CityAdapter cityAdapter;
-    private MenuItem itemSearch, itemShare;
+    private MenuItem itemSearch, itemShare, itemAlarm;
     private boolean isLoadFromCity = false;
     private boolean isNeed2ShowNotification = false;
     private SharedPreferences pref;
@@ -221,10 +213,6 @@ public class WeatherActivity extends AppCompatActivity implements
                         itemSearch.collapseActionView();
                         onRefreshCondition();
                         break;
-                    case NO_INTERNET_CONNECTION:
-                        Toast.makeText(mContext, "No internet connection", Toast.LENGTH_LONG).show();
-                        finish();
-                        break;
                 }
                 return false;
             }
@@ -256,7 +244,9 @@ public class WeatherActivity extends AppCompatActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        MenuItem itemAlarm = menu.findItem(R.id.action_alarm);
+        itemAlarm = menu.findItem(R.id.action_alarm);
+        itemSearch = menu.findItem(R.id.action_search);
+        itemShare = menu.findItem(R.id.action_share_condition);
 
         if (!isNeed2ShowNotification) {
             itemAlarm.setIcon(R.drawable.ic_alarm_off);
@@ -264,8 +254,6 @@ public class WeatherActivity extends AppCompatActivity implements
             itemAlarm.setIcon(R.drawable.ic_alarm_on);
         }
 
-        itemSearch = menu.findItem(R.id.action_search);
-        itemShare = menu.findItem(R.id.action_share_condition);
         final SearchView searchView = (SearchView) itemSearch.getActionView();
         searchView.setOnQueryTextListener(this);
 
@@ -275,6 +263,7 @@ public class WeatherActivity extends AppCompatActivity implements
                 city_list_view.setVisibility(View.VISIBLE);
                 mSwipeRefreshLayout.setVisibility(View.GONE);
                 itemShare.setVisible(false);
+                itemAlarm.setVisible(false);
                 return true;
             }
 
@@ -284,6 +273,7 @@ public class WeatherActivity extends AppCompatActivity implements
                 city_list_view.setVisibility(View.GONE);
                 mSwipeRefreshLayout.setVisibility(View.VISIBLE);
                 itemShare.setVisible(true);
+                itemAlarm.setVisible(true);
                 return true;
             }
         });
@@ -395,7 +385,11 @@ public class WeatherActivity extends AppCompatActivity implements
                 JSONObject jsonObject = null;
                 try {
                     jsonObject = new JSONObject(response.body().string().toString());
-                    WeatherDataCurrent weatherDataCurent = new WeatherDataCurrent();
+                    WeatherData weatherDataCurent = new WeatherData();
+
+                    weatherDataCurent.setTimeZone(
+                            jsonObject.getString("timezone"));
+                    Log.d(TAG, jsonObject.getString("timezone"));
 
                     weatherDataCurent.setWeatherText(
                             jsonObject.getJSONObject("currently").getString("summary"));
@@ -431,10 +425,9 @@ public class WeatherActivity extends AppCompatActivity implements
                             weatherDataCurent.getRelativeHumidity(),
                             weatherDataCurent.getWeatherIcon());
                     Log.d(TAG, jsonObject.toString());
-                } catch (IOException e) {
+                } catch (IOException |JSONException | NullPointerException e) {
                     e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -451,19 +444,23 @@ public class WeatherActivity extends AppCompatActivity implements
             Toast.makeText(mContext,"No city not found", Toast.LENGTH_SHORT).show();
             return;
         }
-        dataHourly.clear();
         Call<ResponseBody> call = apiService.getHourlyCondition(API_KEY, latitude, longitude);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 JSONObject jsonObject = null;
                 JSONArray jsonArray = null;
+                List<WeatherData> res = new ArrayList<>();
                 try {
                     jsonObject = new JSONObject(response.body().string().toString());
                     jsonArray = jsonObject.getJSONObject("hourly").getJSONArray("data");
                     Log.d(TAG, jsonArray.toString());
                     for (int i = 0; i < jsonArray.length(); ++ i) {
-                        WeatherDataCurrent weatherDataCurent = new WeatherDataCurrent();
+                        WeatherData weatherDataCurent = new WeatherData();
+
+                        weatherDataCurent.setTimeZone(
+                                jsonObject.getString("timezone"));
+                        Log.d(TAG, jsonObject.getString("timezone"));
 
                         weatherDataCurent.setWeatherText(
                                 jsonArray.getJSONObject(i).getString("summary"));
@@ -497,18 +494,17 @@ public class WeatherActivity extends AppCompatActivity implements
                                 "https://darksky.net/forecast/" + latitude + "," + longitude + "/");
                         Log.d(TAG, "https://darksky.net/forecast/" + latitude + "," + longitude + "/");
 
-                        dataHourly.add(weatherDataCurent);
+                        res.add(weatherDataCurent);
                     }
-                    //weatherHourlyAdapter.notifyDataSetChanged();
+                    dataHourly.clear();
+                    dataHourly.addAll(res);
                     Message message = new Message();
                     message.what = LOAD_HOURLY_CONDITION;
                     handler.sendMessage(message);
-                } catch (IOException e) {
+                } catch (IOException |JSONException | NullPointerException e) {
                     e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                 }
-                //JsonObject jsonObject = new JsonObject()
             }
 
             @Override
@@ -524,19 +520,23 @@ public class WeatherActivity extends AppCompatActivity implements
             Toast.makeText(mContext,"No city not found", Toast.LENGTH_SHORT).show();
             return;
         }
-        dataDaily.clear();
         Call<ResponseBody> call = apiService.getDailyCondition(API_KEY, latitude, longitude);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 JSONObject jsonObject = null;
                 JSONArray jsonArray = null;
+                List<WeatherData> res = new ArrayList<>();
                 try {
                     jsonObject = new JSONObject(response.body().string().toString());
                     jsonArray = jsonObject.getJSONObject("daily").getJSONArray("data");
                     Log.d(TAG, jsonArray.toString());
                     for (int i = 0; i < jsonArray.length(); ++ i) {
-                        WeatherDataCurrent weatherDataCurent = new WeatherDataCurrent();
+                        WeatherData weatherDataCurent = new WeatherData();
+
+                        weatherDataCurent.setTimeZone(
+                                jsonObject.getString("timezone"));
+                        Log.d(TAG, jsonObject.getString("timezone"));
 
                         weatherDataCurent.setWeatherText(
                                 jsonArray.getJSONObject(i).getString("summary"));
@@ -570,17 +570,17 @@ public class WeatherActivity extends AppCompatActivity implements
                                 "https://darksky.net/forecast/" + latitude + "," + longitude + "/");
                         Log.d(TAG, "https://darksky.net/forecast/" + latitude + "," + longitude + "/");
 
-                        dataDaily.add(weatherDataCurent);
+                        res.add(weatherDataCurent);
                     }
+                    dataDaily.clear();
+                    dataDaily.addAll(res);
                     Message message = new Message();
                     message.what = LOAD_DAILY_CONDITION;
                     handler.sendMessage(message);
-                } catch (IOException e) {
+                } catch (IOException |JSONException | NullPointerException e) {
                     e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                 }
-                //JsonObject jsonObject = new JsonObject()
             }
 
             @Override
@@ -713,10 +713,9 @@ public class WeatherActivity extends AppCompatActivity implements
                         message.what = LOAD_CONDITION_CITY;
                         handler.sendMessage(message);
 
-                    } catch (IOException e) {
+                    } catch (IOException |JSONException | NullPointerException e) {
                         e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                     }
                 }
 
@@ -779,10 +778,9 @@ public class WeatherActivity extends AppCompatActivity implements
                     Message message = new Message();
                     message.what = LOAD_CITY;
                     handler.sendMessage(message);
-                } catch (IOException e) {
+                } catch (IOException |JSONException | NullPointerException e) {
                     e.printStackTrace();
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -793,31 +791,6 @@ public class WeatherActivity extends AppCompatActivity implements
             }
         });
         return true;
-    }
-
-    public void isInternetAvailable() {
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    final InetAddress address = InetAddress.getByName("www.google.com");
-                    if (address.equals("")) {
-                        Message message = new Message();
-                        message.what = NO_INTERNET_CONNECTION;
-                        handler.sendMessage(message);
-                    }
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                    Message message = new Message();
-                    message.what = NO_INTERNET_CONNECTION;
-                    handler.sendMessage(message);
-                }
-                Message message = new Message();
-                message.what = NO_INTERNET_CONNECTION;
-                handler.sendMessage(message);
-            }
-        }).start();
     }
 
     private Bitmap screenShot(View view) {

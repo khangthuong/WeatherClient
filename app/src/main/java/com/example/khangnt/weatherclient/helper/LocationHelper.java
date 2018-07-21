@@ -138,8 +138,6 @@ public class LocationHelper {
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                         Log.i(TAG, "All location settings are satisfied.");
 
-                        //Toast.makeText(context, "Started location updates!", Toast.LENGTH_SHORT).show();
-
                         //noinspection MissingPermission
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                                 mLocationCallback, Looper.myLooper());

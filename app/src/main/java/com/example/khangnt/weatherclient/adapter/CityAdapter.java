@@ -17,7 +17,7 @@ import com.example.khangnt.weatherclient.model.City;
 import java.util.List;
 
 public class CityAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private final String TAG = "123";
+    private final String TAG = "CityAdapter";
     private Context mContext;
     private List<City> data;
     private static OnItemClickListenerRecycleView onItemClickListenerRecycleView;

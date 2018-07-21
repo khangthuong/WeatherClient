@@ -36,8 +36,8 @@ public class AlarmHelper {
 
         // Set the alarm to start at 10:00 AM
         Calendar calendar1 = Calendar.getInstance();
-        calendar1.set(Calendar.HOUR_OF_DAY, 14);
-        calendar1.set(Calendar.MINUTE, 16);
+        calendar1.set(Calendar.HOUR_OF_DAY, 7);
+        calendar1.set(Calendar.MINUTE, 0);
         calendar1.set(Calendar.SECOND, 0);
         if (calendar1.before(Calendar.getInstance())) {
             calendar1.add(Calendar.DAY_OF_MONTH, 1);

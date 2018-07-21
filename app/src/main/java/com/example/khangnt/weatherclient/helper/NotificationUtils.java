@@ -56,8 +56,9 @@ public class NotificationUtils {
     public void showNotificationMessage(final String title, final String message,
                                         final String timeStamp, Intent intent, String imageUrl) {
         // Check for empty push message
-        if (TextUtils.isEmpty(message))
+        if (TextUtils.isEmpty(message)) {
             return;
+        }
 
         // notification icon
         final int icon = R.mipmap.ic_launcher;

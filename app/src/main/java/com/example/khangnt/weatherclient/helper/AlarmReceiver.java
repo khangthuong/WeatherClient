@@ -1,6 +1,5 @@
 package com.example.khangnt.weatherclient.helper;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -8,8 +7,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -18,12 +15,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.example.khangnt.weatherclient.activity.WeatherActivity;
-import com.example.khangnt.weatherclient.model.WeatherDataCurrent;
+import com.example.khangnt.weatherclient.model.WeatherData;
 import com.example.khangnt.weatherclient.rest.ApiClient;
 import com.example.khangnt.weatherclient.rest.ApiInterface;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,16 +34,13 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static android.content.Context.LOCATION_SERVICE;
 import static com.example.khangnt.weatherclient.rest.ApiClient.API_KEY;
 
 public class AlarmReceiver extends BroadcastReceiver {
 
     private final String TAG = AlarmReceiver.class.getSimpleName();
     private Context context;
-    private Activity current_activity;
     private NotificationUtils notificationUtils;
-    private FusedLocationProviderClient mFusedLocationClient;
     private Double lat, lng;
     private ApiInterface apiService;
     private Handler handler;
@@ -68,10 +59,7 @@ public class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
         this.context = context;
-        //this.current_activity = (Activity) context.getApplicationContext() ;
-        Log.d("ssss", "co vao");
         apiService = ApiClient.getClient().create(ApiInterface.class);
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
 
         if ( Build.VERSION.SDK_INT >= 23 &&
                 ContextCompat.checkSelfPermission( context, android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED &&
@@ -137,7 +125,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                     JSONObject jsonObject = null;
                     try {
                         jsonObject = new JSONObject(response.body().string().toString());
-                        WeatherDataCurrent weatherDataCurent = new WeatherDataCurrent();
+                        WeatherData weatherDataCurent = new WeatherData();
 
                         summary = jsonObject.getJSONObject("currently").getString("summary");
                         Log.d(TAG, summary);
@@ -154,10 +142,9 @@ public class AlarmReceiver extends BroadcastReceiver {
                         Message message = new Message();
                         message.what = 1;
                         handler.sendMessage(message);
-                    } catch (IOException e) {
+                    } catch (IOException |JSONException | NullPointerException e) {
                         e.printStackTrace();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        Toast.makeText(context.getApplicationContext(), e.toString(), Toast.LENGTH_LONG).show();
                     }
                 }
 
